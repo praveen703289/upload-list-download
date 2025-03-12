@@ -26,9 +26,9 @@ public class MainController {
         this.s3Service = s3Service;
 		this.attachmentRepo = attachmentRepo;
     }
-    //uploading file---------------------------------------------------------------
+    //uploading file----------------------------------------------------------------------------------------------------------------
     @PostMapping("/upload")
-    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam(value = "userId", required = false) Long userId) {
+    public ResponseEntity<String> uploadFile(@RequestParam("file") MultipartFile file, @RequestParam(value = "userId",required = false) Long userId) {
         try {
             String message = s3Service.uploadFileAndCreateAttachment(file, userId);
             return new ResponseEntity<>(message, HttpStatus.OK);
@@ -44,48 +44,28 @@ public class MainController {
 	        return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("File size exceeds the 5 MB of limit");
 	    }
 	}
-    //list of files------------------------------------------------------------------------------------
+   //list of files------------------------------------------------------------------------------------------------------------------------
     @GetMapping("/list")
-    public ResponseEntity<List<UserAttachment>> listFiles(@RequestParam(defaultValue = "1") int page,
-                                                             @RequestParam(defaultValue = "20") int size,
-                                                             @RequestParam(defaultValue = "desc") String sortOrder) {
-        try {
-            List<UserAttachment> files = s3Service.getFiles(page, size, sortOrder);
-            return new ResponseEntity<>(files, HttpStatus.OK);
-        } catch (Exception e) {
-            return new ResponseEntity<>(null, HttpStatus.INTERNAL_SERVER_ERROR);
-        }
+    public ResponseEntity<Object> listFiles(
+            @RequestParam(required = false) Long userId,
+            @RequestParam(required = false) Integer page,
+            @RequestParam(required = false) Integer size) {
+        return s3Service.getFiles(userId, page, size);
     }
-    //downloading files--------------------------------------------------------------------------------------------------
-    @GetMapping("/download/{filename}")
-    public ResponseEntity<?> downloadFile(@PathVariable String filename,
-                                          @RequestParam("userId") Long userId) {
-        try {
-            byte[] fileContent = s3Service.downloadFileForUser(filename, userId);
 
-            if (fileContent == null) {
-                Optional<UserAttachment> attachmentid = attachmentRepo.findByFileName(filename);
-                if (attachmentid.isPresent()) {
-                    return ResponseEntity.status(HttpStatus.FORBIDDEN)
-                            .body("User ID " + userId + " does not have access to the file: " + filename);
-                } else {
-                    
-                    return ResponseEntity.status(HttpStatus.NOT_FOUND)
-                            .body("No records found with the given filename: " + filename);
-                }
-            }
-            HttpHeaders headers = new HttpHeaders();
-            headers.add("Content-Disposition", "attachment; filename=" + filename);
-            String successMessage = "You can download your file from the browser.";
-            return ResponseEntity.ok()
-                    .headers(headers)
-                    .body(successMessage); 
+    //downloading files-----------------------------------------------------------------------------------------------------------------------
+    @GetMapping("/download/{filename}")
+    public ResponseEntity<byte[]> downloadFile(
+            @PathVariable String filename,
+            @RequestParam(value = "userId", required = true) Long userId,
+            @RequestParam(value = "attachmentId", required = true) Long attachmentId) {
+
+        try {
+            return s3Service.downloadFileForUser(filename, userId, attachmentId);
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                    .body("Internal server error: " + e.getMessage());
+                    .body(("Internal server error: " + e.getMessage()).getBytes());
         }
     }
-
-
 
 }

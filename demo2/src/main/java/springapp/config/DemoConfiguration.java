@@ -17,8 +17,8 @@ public class DemoConfiguration {
                 .region(Region.of("ap-south-1"))
                 .credentialsProvider(
                         StaticCredentialsProvider.create(AwsBasicCredentials.create(
-                                "AKIAZVCNVINWJQAQ3S4G", 
-                                "izX9hMtx6Y6Kn+Yp1n7cxsq2/qjDyHLzqQ4VM5r7"))
+                                "AKIAZVCNVINWPVMMM66C", 
+                                "oH8WYXs4yFY2CFYdqb3GV0JM7mzHvsH5M6nKEo2r"))
                 )
                 .build();
     }
